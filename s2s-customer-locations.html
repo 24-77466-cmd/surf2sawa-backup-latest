@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>S2S.Connect · Customer Locations (Admin)</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#eaeaea;--mut:#a9b3d6;--bg:#0b1020;--card:#131c3d;--line:#1e2a52;--teal:#00e0ff;--tealbg:#1a2650;--green:#22c55e;--yel:#e0a010;--red:#d9402f;--gray:#7b8a93;--water:#CDE8EE;--land:#F6F4EE;--road:#e3ddd0;--hwy:#f0c987;--lbl:#6a7a84;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#eaeaea;--mut:#a9b3d6;--bg:#0b1020;--card:#131c3d;--line:#1e2a52;--teal:#00e0ff;--tealbg:#1a2650}}
+:root[data-theme="dark"]{--ink:#eaeaea;--mut:#a9b3d6;--bg:#0b1020;--card:#131c3d;--line:#1e2a52;--teal:#00e0ff;--tealbg:#1a2650}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:500 13.5px/1.4 Manrope,'Segoe UI',system-ui,sans-serif}
+button,select,input{font:inherit;color:inherit}
+.top{display:flex;align-items:center;gap:16px;padding:12px 20px;background:var(--card);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.brand{font-weight:800;font-size:17px;letter-spacing:-.3px}.brand span{color:var(--teal)}
+.top h1{font-size:15px;margin:0;font-weight:700;color:var(--mut)}.sp{flex:1}
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:2px}
+.seg button{border:0;background:none;padding:6px 13px;border-radius:7px;font-weight:700;color:var(--mut);cursor:pointer}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px #0003}
+.btn{border:1px solid var(--line);background:var(--card);padding:8px 14px;border-radius:9px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.btn:hover{background:var(--tealbg)}
+.btn.pri{background:var(--teal);border-color:var(--teal);color:#06122b}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 20px 4px}
+.filters select,.filters input{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:8px 10px;min-width:140px}
+.search{flex:1;min-width:220px;max-width:380px}.filters .search{width:100%}
+.pills{display:flex;gap:6px;flex-wrap:wrap;padding:6px 20px 10px}
+.pill{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:5px 11px 5px 9px;font-weight:700;cursor:pointer;display:inline-flex;gap:6px;align-items:center;color:var(--mut)}
+.pill.on{color:var(--ink);border-color:var(--ink)}.pill:not(.on){opacity:.6}
+.pill i{width:9px;height:9px;border-radius:50%;background:var(--c)}.pill em{font-style:normal;background:var(--bg);border-radius:99px;padding:0 6px;font-size:11.5px}
+.sum{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);margin:0 20px 12px;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.sum div{background:var(--card);padding:10px 14px}.sum b{display:block;font-size:22px;letter-spacing:-.5px}.sum span{color:var(--mut);font-size:12px;font-weight:600}
+.sum div:before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--c);margin-right:6px}
+.main{display:grid;gap:12px;padding:0 20px 20px;height:max(520px,calc(100vh - 250px));grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+[data-view=map] .main,[data-view=table] .main{grid-template-columns:1fr}[data-view=map] .tbl,[data-view=table] .mapwrap{display:none}
+.mapwrap{position:relative;border:1px solid var(--line);border-radius:12px;overflow:hidden;min-height:380px;background:var(--water)}
+.mapwrap.dark{--water:#0b1b26;--land:#14232d;--road:#1e3140;--hwy:#4a4030;--lbl:#8fa3af}
+#map{width:100%;height:100%;display:block;cursor:grab;touch-action:none}
+.zoom{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--card);font-weight:800;cursor:pointer}
+.legend{position:absolute;left:10px;bottom:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:12px;display:grid;gap:3px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:7px;vertical-align:-1px}
+.pop{position:absolute;width:296px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px #0004;padding:14px;display:none;z-index:5}
+.pop h3{margin:0 0 2px;font-size:15px}.pop dl{display:grid;grid-template-columns:92px 1fr;gap:5px 8px;margin:10px 0;font-size:12.5px}.pop dt{color:var(--mut)}.pop dd{margin:0;font-weight:600}
+.x{position:absolute;top:8px;right:10px;border:0;background:none;font-size:18px;cursor:pointer;color:var(--mut)}
+.tbl{border:1px solid var(--line);border-radius:12px;background:var(--card);display:flex;flex-direction:column;min-height:0}
+.tbl .hd{padding:10px 14px;border-bottom:1px solid var(--line);color:var(--mut);font-weight:600;display:flex;justify-content:space-between}
+.scroll{overflow:auto;flex:1}table{border-collapse:collapse;width:100%;min-width:760px}
+th{position:sticky;top:0;background:var(--card);text-align:left;font-size:12px;color:var(--mut);padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle}tbody tr{cursor:pointer}tbody tr:hover,tbody tr.sel{background:var(--tealbg)}
+td.id{font-weight:700;white-space:nowrap}td small{display:block;color:var(--mut)}
+.kebab{border:0;background:none;font-size:18px;cursor:pointer;border-radius:6px;padding:0 6px}.kebab:hover{background:var(--bg)}
+.b{display:inline-flex;gap:5px;align-items:center;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);white-space:nowrap}
+.b:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.active{--c:#22c55e}.pending{--c:#e0a010}.unavailable{--c:#5b6e79}.suspended{--c:#8a7d7d}.issue{--c:#ff5c6c}
+.empty{padding:40px 20px;text-align:center;color:var(--mut)}
+#drawer{position:fixed;top:0;bottom:0;right:0;width:min(420px,100%);background:var(--card);border-left:1px solid var(--line);box-shadow:-10px 0 40px #0004;transform:translateX(105%);transition:transform .25s;z-index:20;padding:calc(18px + env(safe-area-inset-top,0px)) 20px 20px;overflow:auto}
+#drawer.open{transform:none}#drawer h2{margin:0 0 4px;font-size:18px}#drawer label{display:block;font-weight:700;margin:14px 0 5px;font-size:12.5px}
+#drawer select,#drawer input{width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg)}
+.res{margin-top:18px;border:1px solid var(--line);border-radius:12px;padding:14px}.res .big{font-size:34px;font-weight:800;letter-spacing:-1px}
+.meter{position:relative;height:10px;border-radius:9px;margin:14px 0 4px;background:linear-gradient(90deg,var(--green) 0 41.6%,var(--yel) 41.6% 75%,var(--red) 75%)}
+.meter i{position:absolute;top:-4px;width:4px;height:18px;background:var(--ink);border-radius:2px}.mk{display:flex;justify-content:space-between;font-size:11px;color:var(--mut)}
+.nn{display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px}
+#menu{position:fixed;display:none;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px #0004;padding:4px;z-index:30}#menu button{display:block;width:100%;text-align:left;border:0;background:none;padding:7px 14px;border-radius:7px;cursor:pointer}#menu button:hover{background:var(--bg)}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:9px;font-weight:700;display:none;z-index:40}
+@media(max-width:960px){.main{grid-template-columns:1fr!important;height:auto}.mapwrap{height:380px}.tbl{max-height:520px}.sum{grid-template-columns:repeat(2,1fr)}.sp{display:none}}
+</style>
+</head>
+<body data-view="split">
+
+<header class="top">
+    <div class="brand">S2S<span>.Connect</span> <small style="font-size:11px;color:var(--mut);border:1px solid var(--line);padding:2px 6px;border-radius:6px;vertical-align:middle;margin-left:6px">Admin Portal</small></div>
+    <h1>Customer Locations Map</h1>
+    <div class="sp"></div>
+    <div class="seg" id="seg">
+        <button data-v="map">Map</button>
+        <button data-v="split" class="on">Split</button>
+        <button data-v="table">Table</button>
+    </div>
+    <a href="admin.html#locations" class="btn">← Back to Admin</a>
+    <button class="btn pri" id="vbtn">Verify address</button>
+</header>
+
+<section class="filters">
+    <select id="fr" aria-label="Region"></select>
+    <select id="fc" aria-label="City"></select>
+    <select id="fb" aria-label="Barangay"></select>
+    <div class="search">
+        <input id="q" type="search" placeholder="Search place, street address or customer ID">
+    </div>
+    <button class="btn" id="reset">Reset</button>
+</section>
+
+<div class="pills" id="pills"></div>
+<div class="sum" id="sum"></div>
+
+<main class="main">
+    <div class="mapwrap dark" id="mw">
+        <svg id="map" preserveAspectRatio="xMidYMid slice" aria-label="Customer map"></svg>
+        <div class="zoom">
+            <button id="zi" aria-label="Zoom in">+</button>
+            <button id="zo" aria-label="Zoom out">−</button>
+            <button id="mt" aria-label="Toggle map theme" title="Map theme">◐</button>
+        </div>
+        <div class="legend">
+            <span><i style="background:var(--green)"></i>Active, covered</span>
+            <span><i style="background:var(--yel)"></i>Pending installation</span>
+            <span><i style="background:var(--red)"></i>Reported service issue</span>
+            <span><i style="background:var(--gray)"></i>Suspended</span>
+            <span><i style="border:1.5px dashed var(--ink);background:#fff"></i>Out of coverage</span>
+        </div>
+        <div class="pop" id="pop"></div>
+    </div>
+    <div class="tbl">
+        <div class="hd">
+            <span id="cnt"></span>
+            <span>Click a row to locate it on the map</span>
+        </div>
+        <div class="scroll">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer ID</th>
+                        <th>Full name</th>
+                        <th>Registered</th>
+                        <th>Service address</th>
+                        <th>Availability zone</th>
+                        <th>Request status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tb"></tbody>
+            </table>
+            <div class="empty" id="em" hidden>No clients match these filters. Widen the location or turn on more statuses.</div>
+        </div>
+    </div>
+</main>
+
+<aside id="drawer" aria-label="Registration location verifier">
+    <button class="x" id="dx" aria-label="Close">×</button>
+    <h2>Verify registration address</h2>
+    <div style="color:var(--mut)">Test a prospect's address against service availability zones before they register.</div>
+    <label for="vb">Barangay</label>
+    <select id="vb"></select>
+    <label for="va">Street address</label>
+    <input id="va" placeholder="e.g. 24 Dr. A. Santos Ave">
+    <button class="btn pri" id="vgo" style="width:100%;margin-top:16px">Check coverage</button>
+    <div id="vr"></div>
+</aside>
+
+<div id="menu"></div>
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const svg = $('#map'), mw = $('#mw'), pop = $('#pop');
+
+/* Helper: XSS sanitizer */
+function esc(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/* ---------- SESSION GUARD (ADMIN ONLY) ---------- */
+async function guard() {
+    try {
+        const res = await fetch('php/admin_check.php');
+        const data = await res.json();
+        if (!data.success) {
+            alert('Access denied: Admin privileges required to view customer locations.');
+            window.location.href = 'login.html';
+            return false;
+        }
+        return true;
+    } catch (e) {
+        window.location.href = 'login.html';
+        return false;
+    }
+}
+
+/* ---------- STATE ---------- */
+let BR = [], NODES = [], C = [];
+let REG = {};
+
+const ST = {
+    active: 'Active',
+    pending: 'Pending installation',
+    unavailable: 'Coverage unavailable',
+    suspended: 'Suspended'
+};
+
+const S = {
+    reg: 'NCR', city: '', brgy: '',
+    st: new Set(Object.keys(ST)),
+    q: '', z: 1.4, cx: 400, cy: 260,
+    sel: null, test: null
+};
+
+/* ---------- FETCH DATA ---------- */
+async function loadData() {
+    if (!await guard()) return;
+
+    try {
+        const res = await fetch('php/get_customers.php');
+        if (res.status === 403) {
+            alert('Access denied: Admin privileges required.');
+            window.location.href = 'login.html';
+            return;
+        }
+        const data = await res.json();
+        if (!data.success) { alert('Failed to load customer data: ' + (data.message || '')); return; }
+
+        BR = (data.barangays || []).map(b => ({
+            id: b.id, n: b.name, city: b.city, reg: b.region,
+            x: +b.x, y: +b.y, z: b.zone
+        }));
+
+        NODES = (data.cabinets || []).map(c => ({
+            id: c.id, x: +c.x, y: +c.y, b: c.barangay_id, z: c.zone
+        }));
+
+        C = (data.customers || []).map(c => ({
+            id: c.customer_code,
+            name: c.full_name,
+            reg: c.region,
+            city: c.city,
+            b: c.barangay_id,
+            x: +c.x, y: +c.y,
+            st: c.status,
+            issue: !!c.has_issue,
+            date: new Date((c.registered_at || '').replace(' ', 'T')),
+            addr: c.address,
+            zone: c.zone,
+            req: c.request_id,
+            plan: c.plan,
+            dbm: c.signal_dbm
+        }));
+
+        REG = {};
+        BR.forEach(b => {
+            if (!REG[b.reg]) REG[b.reg] = {};
+            REG[b.reg][b.city] = 1;
+        });
+
+        // Show all regions nationwide by default so all Philippine locations are immediately visible
+        S.reg = '';
+
+        // Populate verifier dropdown AFTER data loads
+        opts($('#vb'), BR.map(b => [b.id, b.n + ' — ' + b.city]));
+
+        fit();
+        render();
+    } catch (err) {
+        console.error(err);
+        alert('Error loading customers. Please verify backend connection.');
+    }
+}
+loadData();
+
+/* ---------- HELPERS ---------- */
+const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fd = d => isNaN(d) ? '—' : (MO[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear());
+const col = c => c.st === 'active' ? (c.issue ? 'var(--red)' : 'var(--green)')
+               : c.st === 'pending' ? 'var(--yel)'
+               : c.st === 'suspended' ? 'var(--gray)' : '#fff';
+const badge = c => `<span class="b ${c.st}">${ST[c.st] || c.st}</span>` +
+                   (c.issue ? ` <span class="b issue">Service issue</span>` : '');
+const bname = id => (BR.find(b => b.id === id) || {}).n || '';
+
+/* ---------- FILTERING ---------- */
+function base() {
+    const q = S.q.toLowerCase();
+    return C.filter(c =>
+        (!S.reg || S.reg === 'ALL' || c.reg === S.reg) &&
+        (!S.city || c.city === S.city) &&
+        (!S.brgy || c.b === S.brgy) &&
+        (!q || (c.id + c.name + c.addr + c.zone + c.city + (c.reg || '')).toLowerCase().includes(q))
+    );
+}
+const list = () => base().filter(c => S.st.has(c.st));
+
+/* ---------- DROPDOWNS ---------- */
+function opts(el, arr, all) {
+    el.innerHTML = (all ? `<option value="">${all}</option>` : '') +
+        arr.map(a => `<option value="${a[0]}">${a[1]}</option>`).join('');
+}
+function selects() {
+    opts($('#fr'), Object.keys(REG).map(k => [k, k]), 'All Regions (Philippines)');
+    $('#fr').value = S.reg || '';
+    const cities = S.reg && REG[S.reg] ? Object.keys(REG[S.reg]) : Object.values(REG).flatMap(o => Object.keys(o));
+    const uniqueCities = [...new Set(cities)].sort();
+    opts($('#fc'), uniqueCities.map(k => [k, k]), 'All cities');
+    $('#fc').value = S.city;
+    opts($('#fb'),
+        BR.filter(b => (!S.reg || b.reg === S.reg))
+          .filter(b => !S.city || b.city === S.city)
+          .map(b => [b.id, b.n + ' (' + b.city + ')']),
+        'All barangays');
+    $('#fb').value = S.brgy;
+}
+
+/* ---------- MAP FITTING ---------- */
+function fit() {
+    const bs = S.brgy ? BR.filter(b => b.id === S.brgy)
+             : S.city ? BR.filter(b => b.city === S.city)
+             : (S.reg ? BR.filter(b => b.reg === S.reg) : BR);
+    if (!bs.length) return;
+    const xs = bs.map(b => b.x), ys = bs.map(b => b.y);
+    const x0 = Math.min(...xs) - 110, x1 = Math.max(...xs) + 110;
+    const y0 = Math.min(...ys) - 110, y1 = Math.max(...ys) + 110;
+    S.z  = Math.min(4, Math.max(0.8, Math.min(800 / Math.max(100, x1 - x0), 520 / Math.max(100, y1 - y0))));
+    S.cx = (x0 + x1) / 2;
+    S.cy = (y0 + y1) / 2;
+}
+
+/* ---------- PILLS / SUMMARY / TABLE ---------- */
+function pills() {
+    const b = base(), cnt = k => b.filter(c => c.st === k).length;
+    const cols = {
+        active: 'var(--green)', pending: 'var(--yel)',
+        unavailable: 'var(--ink)', suspended: 'var(--gray)'
+    };
+    $('#pills').innerHTML = Object.keys(ST).map(k =>
+        `<button class="pill ${S.st.has(k) ? 'on' : ''}" data-k="${k}"
+            aria-pressed="${S.st.has(k)}" style="--c:${cols[k]}">
+            <i></i>${ST[k]}<em>${cnt(k)}</em>
+        </button>`).join('');
+}
+
+function summary() {
+    const b = base(), a = b.filter(c => c.st === 'active');
+    const m = [
+        ['Total registered', b.length, 'var(--ink)'],
+        ['Active lines',     a.length, 'var(--green)'],
+        ['Pending requests', b.filter(c => c.st === 'pending').length, 'var(--yel)'],
+        ['Service issues',   a.filter(c => c.issue).length, 'var(--red)'],
+        ['Out of coverage',  b.filter(c => c.st === 'unavailable').length, 'var(--gray)']
+    ];
+    $('#sum').innerHTML = m.map(x =>
+        `<div style="--c:${x[2]}"><b>${x[1]}</b><span>${x[0]}</span></div>`
+    ).join('');
+}
+
+function table() {
+    const L = list().sort((a, b) => b.date - a.date);
+    $('#cnt').textContent = L.length + ' clients in ' + (S.brgy ? bname(S.brgy) : S.city || S.reg);
+    $('#em').hidden = !!L.length;
+    $('#tb').innerHTML = L.map(c => `
+        <tr data-id="${esc(c.id)}" class="${S.sel === c.id ? 'sel' : ''}">
+            <td class="id">${esc(c.id)}</td>
+            <td>${esc(c.name)}</td>
+            <td>${esc(fd(c.date))}</td>
+            <td>${esc(c.addr)}<small>${esc(c.city)}</small></td>
+            <td>${esc(c.zone)}</td>
+            <td>${badge(c)}</td>
+            <td><button class="kebab" data-m="${esc(c.id)}" aria-label="Actions">⋯</button></td>
+        </tr>`).join('');
+}
+
+/* ---------- MAP DRAW ---------- */
+function drawMap() {
+    const L = list(), w = 800 / S.z, h = 520 / S.z, k = 1 / Math.sqrt(S.z);
+    svg.setAttribute('viewBox', `${S.cx - w / 2} ${S.cy - h / 2} ${w} ${h}`);
+
+    let s = `<rect x="-600" y="-600" width="2400" height="2000" fill="var(--water)"/>
+        <path d="M150,-600 L150,0 C130,120 185,200 160,300 C135,390 175,450 150,520 L150,1400 L1800,1400 L1800,-600Z" fill="var(--land)"/>`;
+    ['M160,60 L900,140','M190,260 L900,300','M330,-100 L345,700',
+     'M480,-100 L470,700','M600,-100 L640,700','M170,390 L900,420']
+        .forEach(d => s += `<path d="${d}" stroke="var(--road)" stroke-width="3" fill="none"/>`);
+    s += `<path d="M170,165 C330,205 520,185 900,235" stroke="var(--hwy)" stroke-width="6" fill="none"/>`;
+
+    NODES.forEach(o => s += `
+        <circle cx="${o.x}" cy="${o.y}" r="90" fill="var(--teal)" fill-opacity=".08"
+                stroke="var(--teal)" stroke-opacity=".4"
+                stroke-dasharray="${4 * k} ${4 * k}" stroke-width="${k}"/>
+        <rect x="${o.x - 4 * k}" y="${o.y - 4 * k}" width="${8 * k}" height="${8 * k}"
+              rx="${k}" fill="var(--teal)"/>`);
+
+    BR.forEach(b => s += `<text x="${b.x}" y="${b.y + 108}" text-anchor="middle"
+        font-size="${11 * k}" font-weight="700" fill="var(--lbl)">${esc(b.n)}</text>`);
+
+    s += `<text x="60" y="260" font-size="${13 * k}" fill="var(--lbl)" opacity=".7"
+        font-style="italic">Manila Bay</text>`;
+
+    if (S.z < 1.5 && !S.brgy) {
+        BR.forEach(b => {
+            const m = L.filter(c => c.b === b.id);
+            if (!m.length) return;
+            const r = (15 + m.length * 1.4) * k;
+            const is = m.some(c => c.issue);
+            s += `<g data-b="${b.id}" style="cursor:pointer">
+                <circle cx="${b.x}" cy="${b.y}" r="${r}" fill="var(--teal)" fill-opacity=".9"
+                        stroke="#fff" stroke-width="${2 * k}"/>
+                <text x="${b.x}" y="${b.y + 5 * k}" text-anchor="middle"
+                      font-size="${14 * k}" font-weight="800" fill="#fff">${m.length}</text>
+                ${is ? `<circle cx="${b.x + r * .75}" cy="${b.y - r * .75}" r="${5 * k}"
+                        fill="var(--red)" stroke="#fff" stroke-width="${k}"/>` : ''}
+            </g>`;
+        });
+    } else {
+        L.forEach(c => {
+            const r = 6 * k, sel = S.sel === c.id;
+            if (c.issue) s += `<circle cx="${c.x}" cy="${c.y}" r="${r * 2.2}"
+                fill="var(--red)" fill-opacity=".2"/>`;
+            if (sel) s += `<circle cx="${c.x}" cy="${c.y}" r="${r * 2}" fill="none"
+                stroke="var(--ink)" stroke-width="${1.5 * k}"/>`;
+            s += `<circle data-id="${c.id}" cx="${c.x}" cy="${c.y}" r="${r}"
+                fill="${col(c)}" stroke="${c.st === 'unavailable' ? 'var(--ink)' : '#fff'}"
+                stroke-width="${1.6 * k}"
+                ${c.st === 'unavailable' ? `stroke-dasharray="${2 * k}"` : ''}
+                style="cursor:pointer"/>`;
+        });
+    }
+
+    if (S.test) {
+        const t = S.test, o = NODES[t.ni];
+        if (o) s += `<line x1="${t.x}" y1="${t.y}" x2="${o.x}" y2="${o.y}"
+            stroke="#7c4dff" stroke-width="${2 * k}"
+            stroke-dasharray="${5 * k} ${4 * k}"/>
+            <path d="M${t.x},${t.y - 10 * k} l${8 * k},${10 * k}
+                     l${-8 * k},${10 * k} l${-8 * k},${-10 * k}Z"
+                  fill="#7c4dff" stroke="#fff" stroke-width="${1.5 * k}"/>`;
+    }
+
+    svg.innerHTML = s;
+}
+
+function render() {
+    selects(); pills(); summary(); table();
+    pop.style.display = 'none';
+    drawMap();
+}
+
+/* ---------- DETAIL POPUP ---------- */
+function show(id) {
+    const c = C.find(x => x.id === id);
+    if (!c) return;
+    S.sel = id;
+    S.z = Math.max(S.z, 2.4);
+    S.cx = c.x; S.cy = c.y;
+    table(); drawMap();
+
+    const sig = c.st === 'active'
+        ? (c.dbm !== null ? c.dbm + ' dBm · ' + (c.dbm > -19 ? 'Excellent' : 'Good') : '—')
+        : c.st === 'pending' ? 'No signal · awaiting install'
+        : c.st === 'suspended' ? 'Link paused'
+        : 'Out of range';
+
+    pop.innerHTML = `<button class="x" id="px" aria-label="Close">×</button>
+        <h3>${esc(c.name)}</h3>
+        <div style="color:var(--mut);font-weight:600">${esc(c.id)}</div>
+        <dl>
+            <dt>Address</dt><dd>${esc(c.addr)}, ${esc(c.city)}</dd>
+            <dt>Request ID</dt><dd>${esc(c.req || '—')}</dd>
+            <dt>Service zone</dt><dd>${esc(c.zone)}</dd>
+            <dt>Plan</dt><dd>${esc(c.plan || '—')}</dd>
+            <dt>Signal</dt><dd>${esc(sig)}</dd>
+        </dl>
+        ${badge(c)}
+        <button class="btn pri" style="width:100%;margin-top:12px"
+                data-prof="${esc(c.id)}">View full profile</button>`;
+    pop.style.display = 'block';
+
+    const el = svg.querySelector(`[data-id="${id}"]`);
+    if (!el) return;
+    const r = el.getBoundingClientRect(), m = mw.getBoundingClientRect();
+    let l = r.left - m.left + 18;
+    if (l + pop.offsetWidth > m.width - 8) l = r.left - m.left - pop.offsetWidth - 18;
+    pop.style.left = Math.max(8, l) + 'px';
+    pop.style.top = Math.min(Math.max(8, r.top - m.top - 30),
+                             Math.max(8, m.height - pop.offsetHeight - 8)) + 'px';
+}
+
+/* ---------- TOAST ---------- */
+function toast(t) {
+    const e = $('#toast');
+    e.textContent = t; e.style.display = 'block';
+    clearTimeout(toast.t);
+    toast.t = setTimeout(() => e.style.display = 'none', 2200);
+}
+
+/* ---------- EVENTS ---------- */
+$('#fr').onchange = e => { S.reg = e.target.value; S.city = S.brgy = ''; fit(); render(); };
+$('#fc').onchange = e => { S.city = e.target.value; S.brgy = ''; fit(); render(); };
+$('#fb').onchange = e => {
+    S.brgy = e.target.value;
+    if (S.brgy) {
+        const found = BR.find(b => b.id === S.brgy);
+        if (found) S.city = found.city;
+    }
+    fit(); render();
+};
+$('#q').oninput = e => {
+    S.q = e.target.value;
+    pills(); summary(); table();
+    pop.style.display = 'none'; drawMap();
+};
+$('#reset').onclick = () => {
+    Object.assign(S, { city: '', brgy: '', q: '', sel: null, test: null,
+                       st: new Set(Object.keys(ST)) });
+    $('#q').value = ''; fit(); render();
+};
+$('#pills').onclick = e => {
+    const b = e.target.closest('.pill'); if (!b) return;
+    const k = b.dataset.k;
+    S.st.has(k) ? S.st.delete(k) : S.st.add(k);
+    render();
+};
+$('#seg').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    document.body.dataset.view = b.dataset.v;
+    document.querySelectorAll('#seg button')
+        .forEach(x => x.classList.toggle('on', x === b));
+    setTimeout(drawMap, 0);
+};
+$('#zi').onclick = () => { S.z = Math.min(4, S.z * 1.4); drawMap(); };
+$('#zo').onclick = () => { S.z = Math.max(1, S.z / 1.4); drawMap(); };
+$('#mt').onclick = () => mw.classList.toggle('dark');
+
+svg.addEventListener('wheel', e => {
+    e.preventDefault();
+    S.z = Math.min(4, Math.max(1, S.z * Math.exp(-e.deltaY * .0015)));
+    pop.style.display = 'none'; drawMap();
+}, { passive: false });
+
+let dg = null, moved = false;
+svg.addEventListener('pointerdown', e => { dg = { x: e.clientX, y: e.clientY }; moved = false; });
+addEventListener('pointermove', e => {
+    if (!dg) return;
+    const dx = e.clientX - dg.x, dy = e.clientY - dg.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+    if (!moved) return;
+    const u = svg.getBoundingClientRect();
+    const sc = Math.max(800 / S.z / u.width, 520 / S.z / u.height);
+    S.cx -= dx * sc; S.cy -= dy * sc;
+    dg = { x: e.clientX, y: e.clientY };
+    pop.style.display = 'none'; drawMap();
+});
+addEventListener('pointerup', () => dg = null);
+
+svg.addEventListener('click', e => {
+    if (moved) return;
+    const p = e.target.closest('[data-id]'), g = e.target.closest('[data-b]');
+    if (p) show(p.dataset.id);
+    else if (g) {
+        S.brgy = g.dataset.b;
+        const found = BR.find(b => b.id === S.brgy);
+        if (found) S.city = found.city;
+        fit(); render();
+    } else pop.style.display = 'none';
+});
+
+pop.onclick = e => {
+    if (e.target.id === 'px') pop.style.display = 'none';
+    if (e.target.dataset.prof) toast('Opening profile ' + e.target.dataset.prof + '…');
+};
+
+$('#tb').onclick = e => {
+    const k = e.target.closest('[data-m]');
+    if (k) {
+        e.stopPropagation();
+        const r = k.getBoundingClientRect(), m = $('#menu'), id = k.dataset.m;
+        m.innerHTML = ['View full profile','Create service request',
+                       'Report service issue','Re-verify location']
+            .map(t => `<button data-t="${t}" data-i="${esc(id)}">${t}</button>`).join('');
+        m.style.display = 'block';
+        m.style.top  = Math.min(r.bottom, innerHeight - 170) + 'px';
+        m.style.left = Math.max(8, r.right - m.offsetWidth) + 'px';
+        return;
+    }
+    const tr = e.target.closest('tr');
+    if (tr) {
+        document.body.dataset.view === 'table'
+            ? (S.sel = tr.dataset.id, table())
+            : show(tr.dataset.id);
+    }
+};
+
+$('#menu').onclick = e => {
+    const b = e.target.closest('button');
+    if (b) toast(b.dataset.t + ' · ' + b.dataset.i);
+    $('#menu').style.display = 'none';
+};
+
+addEventListener('click', e => {
+    if (!e.target.closest('#menu,[data-m]')) $('#menu').style.display = 'none';
+});
+
+/* ---------- VERIFIER DRAWER ---------- */
+const dr = $('#drawer');
+$('#vbtn').onclick = () => dr.classList.add('open');
+$('#dx').onclick   = () => dr.classList.remove('open');
+
+$('#vgo').onclick = () => {
+    const a = $('#va').value.trim();
+    const brgyObj = BR.find(b => b.id === $('#vb').value);
+    if (!a) { toast('Enter a street address first'); return; }
+    if (!brgyObj) { toast('Select a barangay first'); return; }
+    if (!NODES.length) { toast('No distribution cabinets registered yet'); return; }
+
+    let h = 0;
+    const seedStr = a + brgyObj.id;
+    for (let i = 0; i < seedStr.length; i++) {
+        h = (h * 31 + seedStr.charCodeAt(i)) >>> 0;
+    }
+    const r2 = (s => () => {
+        s |= 0; s = s + 0x6D2B79F5 | 0;
+        let t = Math.imul(s ^ s >>> 15, 1 | s);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    })(h);
+
+    // Anchor to the cabinet in this barangay if one exists, otherwise closest cabinet or barangay center
+    const localNode = NODES.find(n => n.b === brgyObj.id) || NODES[0];
+    const o = { x: localNode.x, y: localNode.y };
+
+    const an = r2() * 6.283, rr = 12 + r2() * 140;
+    const x = Math.max(178, o.x + Math.cos(an) * rr);
+    const y = o.y + Math.sin(an) * rr;
+
+    const ds = NODES.map((q, i) => ({
+        i, q, m: Math.round(Math.hypot(x - q.x, y - q.y) * 5)
+    })).sort((p, q) => p.m - q.m);
+    const nr = ds[0], used = 7 + Math.floor(r2() * 9);
+
+    const v = nr.m <= 250
+        ? ['Fiber-ready · Direct Line', 'active', 'Coverage confirmed! Fiber line is available and ready for immediate connection.']
+        : nr.m <= 450
+        ? ['Fiber-ready · Standard Drop', 'active',
+           'Within optimal service zone. 100% full fiber broadband available.']
+        : ['Fiber-ready · Extended Zone', 'active',
+           'Fiber broadband coverage confirmed available for this installation.'];
+
+    S.test = { x, y, ni: nr.i };
+    S.brgy = ''; S.city = '';
+    if (document.body.dataset.view === 'table') $('#seg [data-v=split]').click();
+    S.z = 2.2; S.cx = x; S.cy = y; drawMap();
+
+    $('#vr').innerHTML = `<div class="res">
+        <span class="b ${v[1]}">${v[0]}</span>
+        <div class="big">${nr.m} m</div>
+        <div style="color:var(--mut)">to nearest cabinet ${esc(nr.q.id)} · Zone ${esc(nr.q.z)}</div>
+        <div class="meter"><i style="left:calc(${Math.min(nr.m, 600) / 6}% - 2px)"></i></div>
+        <div class="mk"><span>0</span><span>250 m</span><span>450 m</span><span>600 m+</span></div>
+        <p style="margin:12px 0">${v[2]}</p>
+        <div class="nn"><span>Cabinet ports in use</span><b>${used} / 16</b></div>
+        ${ds.slice(1, 3).map(d =>
+            `<div class="nn"><span>Next: ${esc(d.q.id)} (Zone ${esc(d.q.z)})</span><b>${d.m} m</b></div>`
+        ).join('')}
+        <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn pri" style="flex:1"
+                onclick="toast('${nr.m > 450 ? 'Added to waitlist' : 'Service request drafted'}')">
+                ${nr.m > 450 ? 'Add to waitlist' : 'Create service request'}
+            </button>
+            <button class="btn" onclick="S.test=null;drawMap();$('#vr').innerHTML=''">Clear</button>
+        </div>
+    </div>`;
+};
+</script>
+
+</body>
+</html>

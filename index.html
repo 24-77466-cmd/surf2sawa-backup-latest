@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Surf to Sawa | Powered by Converge</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/theme.js"></script>
+</head>
+<body>
+
+<header class="navbar">
+    <a href="index.html" class="logo">Surf <span>to Sawa</span></a>
+    <nav id="top-nav">
+        <a href="#plans">Plans</a>
+        <a href="#about">About</a>
+        <a href="login.html" id="nav-login">Login</a>
+        <a href="register.html" id="nav-register" class="btn-primary">Register</a>
+        <a href="dashboard.html" id="nav-dashboard" class="btn-outline" style="display:none">My Dashboard</a>
+        <button type="button" class="theme-toggle" onclick="toggleTheme()"></button>
+    </nav>
+</header>
+
+<section class="hero-split">
+    <div class="hero-split-inner">
+        <div class="hero-content">
+            <div class="hero-eyebrow">
+                <span class="eyebrow-dot"></span>
+                <span>Powered by Converge ICT</span>
+            </div>
+            <h1>Internet <span>Without Limits.</span><br>Surf beyond the ordinary.</h1>
+            <p>Fiber WiFi plans shaped around you — your speed, your budget, your connection. High-capacity internet built for every Filipino household with zero lock-in contracts.</p>
+            <div class="hero-actions">
+                <a href="register.html" class="btn-primary">Get Connected Now</a>
+                <a href="#plans" class="btn-outline">View Plans</a>
+            </div>
+            <div class="hero-stats-row">
+                <div class="hero-stat">
+                    <span class="hero-stat-value">99.9%</span>
+                    <span class="hero-stat-label">Fiber Uptime</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value">81</span>
+                    <span class="hero-stat-label">Provinces Covered</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="hero-stat-value">Prepaid</span>
+                    <span class="hero-stat-label">No Lock-in</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-visual">
+            <div class="hero-card-frame">
+                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1200&q=80" alt="Surf to Sawa High Speed Internet" class="hero-card-img">
+                <div class="hero-card-overlay"></div>
+                
+                <div class="floating-badge badge-top">
+                    <span class="pulse-indicator"></span>
+                    <div>
+                        <div class="badge-title">Fiber Line Active</div>
+                        <div class="badge-sub">Converge Pure Fiber</div>
+                    </div>
+                </div>
+
+                <div class="floating-badge badge-bottom">
+                    <div>
+                        <span class="plan-pill">Most Popular</span>
+                        <div class="badge-title">Unlimited Surfer 30D</div>
+                        <div class="badge-price">₱500 <small>/ month</small></div>
+                    </div>
+                    <a href="register.html" class="badge-action-btn">&rarr;</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="plans" class="plans">
+    <span class="section-label">YOUR PLANS</span>
+    <h2>Discover Our Most <em>Popular</em> Plans</h2>
+    <div id="plan-list" class="plan-grid"></div>
+    <a href="register.html" class="view-more">
+        View More Plans <span class="arrow">&rarr;</span>
+    </a>
+</section>
+
+<section id="about" class="about-section">
+    <div class="about-inner">
+        <div class="about-text">
+            <span class="section-label">ABOUT US</span>
+            <h2>Surf to Sawa is more than a service — it's your connection to what matters.</h2>
+            <p>Powered by Converge ICT, we bring high-speed fiber internet to communities across the Philippines. From urban centers to growing towns, every connection brings you closer to the world.</p>
+        </div>
+        <div class="feature-cards">
+            <div class="feature-card">
+                <h4>Fiber Speed</h4>
+                <p>Experience reliable fiber-optic performance engineered for streaming, gaming, business, and remote work.</p>
+            </div>
+            <div class="feature-card">
+                <h4>Nationwide Coverage</h4>
+                <p>Available across barangays nationwide. We expand where communities need high-capacity connectivity most.</p>
+            </div>
+            <div class="feature-card">
+                <h4>Enterprise Reliability</h4>
+                <p>Consistent uptime with carrier-grade infrastructure. Your connection stays steady 24/7.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="stats-bar">
+    <div class="stat-item">
+        <span class="stat-number">500+</span>
+        <span class="stat-label">Active Users</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-number">81</span>
+        <span class="stat-label">Provinces Covered</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-number">10+</span>
+        <span class="stat-label">Plans Available</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-number">99.9%</span>
+        <span class="stat-label">Uptime Guaranteed</span>
+    </div>
+</div>
+
+<footer>
+    <p>&copy; 2025–2026 Surf to Sawa | Powered by Converge ICT Solutions Inc.</p>
+</footer>
+
+<script src="js/script.js?v=20261123c"></script>
+<script>
+    try {
+        const u = JSON.parse(localStorage.getItem('user') || 'null');
+        if (u && u.id) {
+            document.getElementById('nav-login').style.display = 'none';
+            document.getElementById('nav-register').style.display = 'none';
+            document.getElementById('nav-dashboard').style.display = 'inline-block';
+        }
+    } catch(e){}
+    loadPlans("plan-list", true);
+</script>
+</body>
+</html>

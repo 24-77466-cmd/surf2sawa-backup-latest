@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Surf to Sawa</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/theme.js"></script>
+    <style>
+        .auth-card select {
+            width: 100%;
+            padding: 13px 16px;
+            margin-bottom: 14px;
+            border-radius: var(--radius-sm);
+            border: 1.5px solid var(--border);
+            background: var(--bg-alt);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: var(--font-sans);
+            cursor: pointer;
+            transition: all .25s;
+        }
+
+        .auth-card select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .auth-card select:focus {
+            outline: none;
+            border-color: var(--accent-2);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+            background: var(--bg);
+        }
+
+        .loc-hint {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: -8px 0 14px;
+            line-height: 1.5;
+        }
+
+        .spinner-inline {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent-2);
+            border-radius: 50%;
+            animation: spin .6s linear infinite;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body class="auth-body">
+
+    <div style="position:fixed;top:20px;right:24px">
+        <button type="button" class="theme-toggle" onclick="toggleTheme()"></button>
+    </div>
+
+    <div class="auth-card" style="max-width: 460px;">
+        <h2>Create Account</h2>
+        <p class="sub">Register your line with Surf to Sawa</p>
+
+        <div id="auth-msg" style="display:none"></div>
+
+        <form id="register-form" onsubmit="event.preventDefault(); registerUser();">
+            <input type="text" id="fullname" placeholder="Full Name" required autocomplete="name">
+            <input type="email" id="email" placeholder="Email Address" required autocomplete="email">
+            <input type="tel" id="phone" placeholder="Mobile Number (e.g. 0917 123 4567)" required autocomplete="tel"
+                inputmode="tel">
+            <input type="password" id="password" placeholder="Password (min. 6 characters)" required minlength="6"
+                autocomplete="new-password">
+
+            <!-- ── Location dropdowns (PSGC) ── -->
+            <select id="sel-region" required>
+                <option value="">Loading Regions…</option>
+            </select>
+
+            <select id="sel-province" disabled required>
+                <option value="">── Select Province ──</option>
+            </select>
+
+            <select id="sel-citymun" disabled required>
+                <option value="">── Select City / Municipality ──</option>
+            </select>
+
+            <select id="sel-barangay" disabled required>
+                <option value="">── Select Barangay ──</option>
+            </select>
+
+            <p class="loc-hint">Your service location is used to configure installation coverage across all Philippine
+                regions.</p>
+
+            <input type="text" id="address" placeholder="Street / House No. (e.g. 24 Dr. A. Santos Ave)" required>
+
+            <button type="submit" class="btn-primary full" id="reg-btn">Register Account</button>
+        </form>
+
+        <section id="verification-panel" hidden style="margin-top:18px">
+            <h3 style="margin:0 0 8px;font-family:var(--font-serif)">Set up Google Authenticator</h3>
+            <p class="sub" style="margin-bottom:10px">Scan this QR code with the Google Authenticator app, then type
+                the 6-digit code it shows to finish creating your account.</p>
+            <div id="reg-qr" style="display:flex;justify-content:center;margin:0 0 10px"></div>
+            <p id="verification-copy" class="sub"></p>
+            <form id="otp-form" onsubmit="event.preventDefault(); verifyRegistrationCode();">
+                <input type="text" id="otp-code" placeholder="6-digit authenticator code" required inputmode="numeric"
+                    autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}">
+                <button type="submit" class="btn-primary full" id="verify-btn">Verify and Create Account</button>
+            </form>
+        </section>
+
+        <p class="switch">Already have an account? <a href="login.html">Login</a></p>
+        <p class="switch" style="margin-top:8px"><a href="index.html"
+                style="color:var(--text-muted);font-size:0.85rem">← Back to Home</a></p>
+    </div>
+
+    <script src="js/qrcode.min.js"></script>
+    <script src="js/script.js?v=20261123c"></script>
+    <script>
+        /* ── PSGC Cascading Dropdowns ── */
+        const PSGC = "php/get_psgc.php";
+
+        const selRegion = document.getElementById("sel-region");
+        const selProvince = document.getElementById("sel-province");
+        const selCitymun = document.getElementById("sel-citymun");
+        const selBarangay = document.getElementById("sel-barangay");
+
+        function setLoading(sel, label) {
+            sel.innerHTML = `<option value="">${label} <span class="spinner-inline"></span></option>`;
+            sel.disabled = true;
+        }
+        function resetSelect(sel, label) {
+            sel.innerHTML = `<option value="">${label}</option>`;
+            sel.disabled = true;
+        }
+
+        async function fetchPSGC(params) {
+            const url = PSGC + "?" + new URLSearchParams(params).toString();
+            const r = await fetch(url);
+            if (!r.ok) throw new Error("HTTP " + r.status);
+            const data = await r.json();
+            if (data.error) throw new Error(data.error);
+            return data;
+        }
+
+        // 1. Load regions on page load
+        (async () => {
+            try {
+                setLoading(selRegion, "Loading Regions…");
+                const regions = await fetchPSGC({ type: "regions" });
+                regions.sort((a, b) => a.name.localeCompare(b.name));
+                selRegion.innerHTML =
+                    '<option value="">── Select Region ──</option>' +
+                    regions.map(r =>
+                        `<option value="${r.code}" data-name="${esc(r.name)}">${esc(r.name)}</option>`
+                    ).join("");
+                selRegion.disabled = false;
+            } catch (e) {
+                selRegion.innerHTML = '<option value="">Failed to load regions</option>';
+                console.error("PSGC regions:", e);
+            }
+        })();
+
+        // 2. Region → Province (with zero-province fallback like NCR)
+        selRegion.addEventListener("change", async () => {
+            resetSelect(selProvince, "── Select Province ──");
+            resetSelect(selCitymun, "── Select City / Municipality ──");
+            resetSelect(selBarangay, "── Select Barangay ──");
+            if (!selRegion.value) return;
+
+            try {
+                setLoading(selProvince, "Loading Provinces…");
+                const provinces = await fetchPSGC({ type: "provinces", region: selRegion.value });
+
+                if (Array.isArray(provinces) && provinces.length > 0) {
+                    provinces.sort((a, b) => a.name.localeCompare(b.name));
+                    selProvince.innerHTML =
+                        '<option value="">── Select Province ──</option>' +
+                        provinces.map(p =>
+                            `<option value="${p.code}" data-name="${esc(p.name)}">${esc(p.name)}</option>`
+                        ).join("");
+                    selProvince.disabled = false;
+                } else {
+                    // NCR or regions without provinces
+                    const regName = getSelName(selRegion);
+                    selProvince.innerHTML = `<option value="ncr_direct" data-name="${esc(regName)}">${esc(regName)} (Direct Cities)</option>`;
+                    selProvince.disabled = false;
+
+                    // Automatically trigger cities load for this region
+                    setLoading(selCitymun, "Loading Cities & Municipalities…");
+                    const items = await fetchPSGC({ type: "citymuns", region: selRegion.value });
+                    items.sort((a, b) => a.name.localeCompare(b.name));
+                    selCitymun.innerHTML =
+                        '<option value="">── Select City / Municipality ──</option>' +
+                        items.map(c =>
+                            `<option value="${c.code}" data-name="${esc(c.name)}">${esc(c.name)}</option>`
+                        ).join("");
+                    selCitymun.disabled = false;
+                }
+            } catch (e) {
+                selProvince.innerHTML = '<option value="">Failed to load provinces</option>';
+                console.error("PSGC provinces:", e);
+            }
+        });
+
+        // 3. Province → City/Municipality (combined)
+        selProvince.addEventListener("change", async () => {
+            if (selProvince.value === 'ncr_direct') return; // Handled directly by Region
+            resetSelect(selCitymun, "── Select City / Municipality ──");
+            resetSelect(selBarangay, "── Select Barangay ──");
+            if (!selProvince.value) return;
+            try {
+                setLoading(selCitymun, "Loading Cities & Municipalities…");
+                const items = await fetchPSGC({ type: "citymuns", province: selProvince.value });
+                items.sort((a, b) => a.name.localeCompare(b.name));
+                selCitymun.innerHTML =
+                    '<option value="">── Select City / Municipality ──</option>' +
+                    items.map(c =>
+                        `<option value="${c.code}" data-name="${esc(c.name)}">${esc(c.name)}</option>`
+                    ).join("");
+                selCitymun.disabled = false;
+            } catch (e) {
+                selCitymun.innerHTML = '<option value="">Failed to load cities/municipalities</option>';
+                console.error("PSGC citymuns:", e);
+            }
+        });
+
+        // 4. City/Mun → Barangay
+        selCitymun.addEventListener("change", async () => {
+            resetSelect(selBarangay, "── Select Barangay ──");
+            if (!selCitymun.value) return;
+            try {
+                setLoading(selBarangay, "Loading Barangays…");
+                let barangays;
+                try {
+                    barangays = await fetchPSGC({ type: "barangays", city: selCitymun.value });
+                } catch {
+                    barangays = null;
+                }
+                if (!barangays || !barangays.length) {
+                    barangays = await fetchPSGC({ type: "barangays", mun: selCitymun.value });
+                }
+                barangays.sort((a, b) => a.name.localeCompare(b.name));
+                selBarangay.innerHTML =
+                    '<option value="">── Select Barangay ──</option>' +
+                    barangays.map(b =>
+                        `<option value="${b.code}" data-name="${esc(b.name)}">${esc(b.name)}</option>`
+                    ).join("");
+                selBarangay.disabled = false;
+            } catch (e) {
+                selBarangay.innerHTML = '<option value="">Failed to load barangays</option>';
+                console.error("PSGC barangays:", e);
+            }
+        });
+
+        // Helper to get selected option's data-name
+        function getSelName(sel) {
+            const opt = sel.options[sel.selectedIndex];
+            return opt ? (opt.dataset.name || opt.textContent.trim()) : "";
+        }
+
+        // Override registerUser to include PSGC fields and phone verification.
+        window.registerUser = async function () {
+            const fullname = document.getElementById("fullname").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const phone = document.getElementById("phone").value.trim();
+            const password = document.getElementById("password").value;
+            const address = document.getElementById("address").value.trim();
+
+            const regionCode = selRegion.value;
+            const regionName = getSelName(selRegion);
+            const provinceCode = selProvince.value;
+            let provinceName = getSelName(selProvince);
+            if (provinceCode === 'ncr_direct') provinceName = 'Metro Manila';
+            const citymunName = getSelName(selCitymun);
+            const barangayCode = selBarangay.value;
+            const barangayName = getSelName(selBarangay);
+
+            if (!fullname || !email || !phone || !password) {
+                notify("Please fill in all account fields, including your mobile number.", false); return;
+            }
+            if (password.length < 6) {
+                notify("Password must be at least 6 characters.", false); return;
+            }
+            if (!regionCode || !provinceCode || !selCitymun.value || !barangayCode) {
+                notify("Please select your complete location (Region → Province → City/Municipality → Barangay).", false); return;
+            }
+            if (!address) {
+                notify("Please enter your street address.", false); return;
+            }
+
+            const btn = document.getElementById("reg-btn");
+            btn.disabled = true; btn.textContent = "Preparing authenticator…";
+            try {
+                const res = await fetch("php/register.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        fullname, email, phone, password, address,
+                        region: regionName,
+                        province: provinceName,
+                        city: citymunName,
+                        barangay_name: barangayName,
+                        barangay_code: barangayCode,
+                        barangay: barangayCode
+                    })
+                });
+                const data = await res.json();
+                notify(data.message, data.success);
+                if (data.success) {
+                    document.getElementById("register-form").hidden = true;
+                    document.getElementById("verification-panel").hidden = false;
+                    showVerificationMessage(data);
+                    document.getElementById("otp-code").focus();
+                }
+            } catch (err) {
+                notify("Registration request failed. Check server connection.", false);
+            } finally {
+                btn.disabled = false; btn.textContent = "Register Account";
+            }
+        };
+
+        function showVerificationMessage(data) {
+            if (data.otpauth_uri) {
+                renderAuthenticatorQr("reg-qr", data.otpauth_uri);
+            }
+            document.getElementById("verification-copy").textContent = data.message || "Enter the code from your authenticator app.";
+        }
+
+        async function restorePendingRegistration() {
+            try {
+                const res = await fetch("php/registration_status.php", { cache: "no-store" });
+                const data = await res.json();
+                if (data.success && data.pending) {
+                    document.getElementById("register-form").hidden = true;
+                    document.getElementById("verification-panel").hidden = false;
+                    showVerificationMessage(data);
+                }
+            } catch (err) {
+                console.warn("Could not restore pending registration state.", err);
+            }
+        }
+
+        async function verifyRegistrationCode() {
+            const codeInput = document.getElementById("otp-code");
+            const code = codeInput.value.trim();
+            if (!/^\d{6}$/.test(code)) {
+                notify("Enter the 6-digit verification code.", false); return;
+            }
+            const btn = document.getElementById("verify-btn");
+            btn.disabled = true; btn.textContent = "Verifying…";
+            try {
+                const res = await fetch("php/verify_registration.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code })
+                });
+                const data = await res.json();
+                notify(data.message, data.success);
+                if (data.success) {
+                    document.getElementById("verification-panel").hidden = true;
+                    setTimeout(() => { window.location.href = "login.html"; }, 1200);
+                }
+            } catch (err) {
+                notify("Verification request failed. Check the server connection.", false);
+            } finally {
+                btn.disabled = false; btn.textContent = "Verify and Create Account";
+            }
+        }
+
+        restorePendingRegistration();
+    </script>
+</body>
+
+</html>

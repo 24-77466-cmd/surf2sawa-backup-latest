@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | Surf to Sawa</title>
+<link rel="stylesheet" href="css/style.css">
+<script src="js/theme.js"></script>
+<style>
+    #phone-change-flow input {
+        width: 100%;
+        padding: 13px 16px;
+        margin-bottom: 14px;
+        border-radius: var(--radius-sm);
+        border: 1.5px solid var(--border);
+        background: var(--bg-alt);
+        color: var(--text);
+        font-size: 0.95rem;
+        font-family: var(--font-sans);
+        transition: all .25s;
+    }
+
+    #phone-change-flow input:focus {
+        outline: none;
+        border-color: var(--accent-2);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, .12);
+        background: var(--bg);
+    }
+</style>
+</head>
+<body>
+
+<header class="navbar">
+    <a href="index.html" class="logo">Surf <span>to Sawa</span></a>
+    <nav style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <a href="admin.html" id="admin-link" style="display:none">Admin Panel</a>
+        <a href="s2s-customer-locations.html" id="locations-link" style="display:none">Customer Locations</a>
+        <a href="topup.html" id="topup-link" style="display:none" class="btn-outline">Top Up</a>
+        <span id="welcome" style="color:var(--text-muted);font-size:0.9rem"></span>
+        <button type="button" class="theme-toggle" onclick="toggleTheme()"></button>
+        <a href="php/logout.php" onclick="localStorage.removeItem('user')" class="btn-outline">Logout</a>
+    </nav>
+</header>
+
+<section class="dashboard">
+    <h2>Welcome back, <span id="username">User</span></h2>
+    <p class="balance-display">Account balance: <strong>₱<span id="balance">0.00</span></strong></p>
+
+    <!-- Mobile Number / Change Number Card -->
+    <div class="sub-card" id="phone-card" style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <div>
+                <span class="badge" style="margin-bottom:6px">Account</span>
+                <h3 style="margin:4px 0 2px;color:var(--text);font-size:1.05rem">Mobile Number</h3>
+                <small style="color:var(--text-muted)">Current: <strong id="current-phone">—</strong></small><br>
+                <small style="color:var(--text-muted)">Google Authenticator: <strong id="totp-status">—</strong></small>
+            </div>
+            <button type="button" class="btn-outline" id="phone-change-toggle" onclick="togglePhoneChange()">Change
+                number</button>
+        </div>
+
+        <div id="phone-change-flow" hidden style="margin-top:14px">
+            <div id="phone-msg" style="display:none"></div>
+            <form id="phone-request-form" onsubmit="event.preventDefault(); requestPhoneChange();">
+                <p class="sub" style="margin:0 0 10px">Enter the new number, then confirm it with a code from your
+                    Google Authenticator app.</p>
+                <input type="tel" id="pc-phone" placeholder="New mobile number (e.g. 0917 123 4567)" required
+                    inputmode="tel" autocomplete="tel">
+                <button type="submit" class="btn-primary full" id="pc-send-btn">Continue</button>
+            </form>
+            <form id="phone-verify-form" hidden onsubmit="event.preventDefault(); verifyPhoneChange();">
+                <div id="pc-totp-setup" hidden>
+                    <p class="sub" style="margin:0 0 10px">Scan this QR code with the Google Authenticator app, then
+                        type the 6-digit code it shows.</p>
+                    <div id="pc-qr" style="display:flex;justify-content:center;margin:0 0 10px"></div>
+                </div>
+                <p id="pc-otp-copy" class="sub" style="margin:0 0 10px">Enter the 6-digit code from your Google
+                    Authenticator app to confirm the new number.</p>
+                <input type="text" id="pc-code" placeholder="6-digit authenticator code" required inputmode="numeric"
+                    autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}">
+                <button type="submit" class="btn-primary full" id="pc-verify-btn">Confirm new number</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Location & Coverage Card -->
+    <div id="location-card" class="sub-card" style="display:none;margin-bottom:20px;border-left-color:var(--load-normal)"></div>
+
+    <!-- Active Subscription Card -->
+    <div id="active-sub-card" class="sub-card" style="display:none;margin-bottom:30px"></div>
+
+    <h3>Choose an Internet Plan</h3>
+    <div id="plan-list" class="plan-grid"></div>
+</section>
+
+<script src="js/qrcode.min.js"></script>
+<script src="js/script.js?v=20261123c"></script>
+<script>
+    checkSession();
+    loadPlans("plan-list", false);
+
+    /* ── Change mobile number (Google Authenticator) ── */
+    function phoneNotify(msg, ok = true) {
+        const el = document.getElementById("phone-msg");
+        el.textContent = msg;
+        el.style.display = "block";
+        el.style.background = ok ? "rgba(34, 197, 94, 0.15)" : "rgba(255, 92, 138, 0.15)";
+        el.style.border = ok ? "1px solid var(--load-normal)" : "1px solid var(--accent-2)";
+        el.style.color = ok ? "var(--load-normal)" : "#ff7a6b";
+        el.style.padding = "10px 14px";
+        el.style.borderRadius = "8px";
+        el.style.marginBottom = "14px";
+        el.style.fontSize = "0.9rem";
+    }
+
+    function togglePhoneChange() {
+        const flow = document.getElementById("phone-change-flow");
+        flow.hidden = !flow.hidden;
+        if (!flow.hidden) {
+            document.getElementById("pc-phone").focus();
+        }
+    }
+
+    function showPhoneOtpMessage(data) {
+        const setupBox = document.getElementById("pc-totp-setup");
+        if (data.totp_setup_required && data.otpauth_uri) {
+            setupBox.hidden = false;
+            renderAuthenticatorQr("pc-qr", data.otpauth_uri);
+        } else {
+            setupBox.hidden = true;
+        }
+        const lines = [data.message || "Enter the code from your Google Authenticator app."];
+        if (data.phone_masked) lines.push("New number: " + data.phone_masked);
+        document.getElementById("pc-otp-copy").textContent = lines.join(" ");
+    }
+
+    async function requestPhoneChange() {
+        const phone = document.getElementById("pc-phone").value.trim();
+        if (!phone) {
+            phoneNotify("Enter the new mobile number.", false); return;
+        }
+        const btn = document.getElementById("pc-send-btn");
+        btn.disabled = true; btn.textContent = "Checking…";
+        try {
+            const res = await fetch("php/request_phone_change.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone })
+            });
+            const data = await res.json();
+            phoneNotify(data.message, data.success);
+            if (data.success) {
+                document.getElementById("phone-request-form").hidden = true;
+                document.getElementById("phone-verify-form").hidden = false;
+                showPhoneOtpMessage(data);
+                document.getElementById("pc-code").focus();
+            }
+        } catch (err) {
+            phoneNotify("Request failed. Check the server connection.", false);
+        } finally {
+            btn.disabled = false; btn.textContent = "Continue";
+        }
+    }
+
+    async function verifyPhoneChange() {
+        const code = document.getElementById("pc-code").value.trim();
+        if (!/^\d{6}$/.test(code)) {
+            phoneNotify("Enter the 6-digit code from your authenticator app.", false); return;
+        }
+        const btn = document.getElementById("pc-verify-btn");
+        btn.disabled = true; btn.textContent = "Verifying…";
+        try {
+            const res = await fetch("php/verify_phone_change.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code })
+            });
+            const data = await res.json();
+            phoneNotify(data.message, data.success);
+            if (data.success) {
+                document.getElementById("current-phone").textContent = formatPhPhone(data.phone);
+                const user = JSON.parse(localStorage.getItem("user") || "{}");
+                user.phone = data.phone;
+                user.phone_verified = true;
+                user.totp_enabled = true;
+                localStorage.setItem("user", JSON.stringify(user));
+                const totpEl = document.getElementById("totp-status");
+                if (totpEl) { totpEl.textContent = "Enabled"; totpEl.style.color = "var(--load-normal)"; }
+                document.getElementById("phone-change-flow").hidden = true;
+                document.getElementById("phone-verify-form").hidden = true;
+                document.getElementById("phone-request-form").hidden = false;
+                document.getElementById("pc-phone").value = "";
+                document.getElementById("pc-code").value = "";
+            }
+        } catch (err) {
+            phoneNotify("Verification request failed. Check the server connection.", false);
+        } finally {
+            btn.disabled = false; btn.textContent = "Confirm new number";
+        }
+    }
+</script>
+
+</body>
+</html>

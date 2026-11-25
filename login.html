@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Surf to Sawa</title>
+    <link rel="stylesheet" href="css/style.css?v=20261123">
+    <script src="js/theme.js"></script>
+</head>
+
+<body class="auth-body">
+
+    <div style="position:fixed;top:20px;right:24px">
+        <button type="button" class="theme-toggle" onclick="toggleTheme()"></button>
+    </div>
+
+    <div class="auth-card">
+        <h2>Welcome Back</h2>
+        <p class="sub">Log in to your Surf to Sawa account</p>
+
+        <div id="auth-msg" style="display:none"></div>
+
+        <form id="login-form" onsubmit="event.preventDefault(); loginUser();">
+            <input type="email" id="email" placeholder="Email address" required autocomplete="email">
+            <div class="password-wrap">
+                <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
+                <button type="button" class="password-toggle" onclick="togglePassword('password', this)"
+                    aria-label="Show password" aria-pressed="false" title="Show password">
+                    <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path
+                            d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
+                        </path>
+                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                    </svg>
+                </button>
+            </div>
+            <button type="submit" class="btn-primary full">Login</button>
+        </form>
+
+        <section id="login-otp-panel" hidden style="margin-top:18px">
+            <h3 style="margin:0 0 8px;font-family:var(--font-serif)">Google Authenticator</h3>
+            <div id="login-totp-setup" hidden>
+                <p class="sub" style="margin-bottom:10px">Scan this QR code with the Google Authenticator app, then type
+                    the 6-digit code it shows.</p>
+                <div id="login-qr" style="display:flex;justify-content:center;margin:0 0 10px"></div>
+            </div>
+            <p id="login-otp-copy" class="sub">Enter the 6-digit code from your Google Authenticator app.</p>
+            <form onsubmit="event.preventDefault(); verifyLoginCode();">
+                <input type="text" id="login-otp-code" placeholder="6-digit authenticator code" required
+                    inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}">
+                <button type="submit" class="btn-primary full" id="login-verify-btn">Verify and Login</button>
+            </form>
+        </section>
+
+        <p class="switch">No account yet? <a href="register.html">Register</a></p>
+        <p class="switch" id="back-to-login" hidden style="margin-top:8px"><a href="#"
+                onclick="backToLogin(); return false;" style="color:var(--text-muted);font-size:0.85rem">← Back to
+                Login</a></p>
+        <p class="switch" style="margin-top:8px"><a href="index.html"
+                style="color:var(--text-muted);font-size:0.85rem">← Back to Home</a></p>
+    </div>
+
+    <script src="js/qrcode.min.js"></script>
+    <script src="js/script.js?v=20261123c"></script>
+    <script>
+        restoreLoginOtp();
+    </script>
+</body>
+
+</html>
